@@ -1,9 +1,11 @@
 import './tailwind.output.css';
 
+import Title from './Title';
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-500">
-      <h2 className="font-inter text-white">TailwindCSS + React</h2>
+    <div className="min-h-screen bg-dark flex items-center justify-center">
+      <Title />
     </div>
   );
 }
