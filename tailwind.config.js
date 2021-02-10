@@ -104,6 +104,7 @@ module.exports = {
       ...theme('colors'),
       dark: '#252525',
       main: '#111827',
+      positive: '#17EB00',
     }),
     zIndex: {
       'neg-30': '-30',
