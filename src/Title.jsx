@@ -21,7 +21,7 @@ const Title = () => {
     },[]) */
 
     return (
-        <div className='flex flex-col sm:flex-row items-center justify-center w-screen sm:items-start sm:justify-start sm:w-auto'>
+        <div className='flex flex-col sm:flex-row items-center justify-center w-95% sm:items-start sm:justify-start sm:w-auto'>
             <div className='font-inter text-gray-100 text-center flex items-center justify-center pb-2 sm:pb-7 lg:text-xl'>
                 What if you bought
             </div>
