@@ -1,9 +1,11 @@
 import React, {useRef, useState, useEffect} from 'react'
 import Cleave from 'cleave.js/react';
+import {showModalStock} from './redux/actionCreators'
+import {connect} from 'react-redux'
 
 import List from './List'
 
-const Title = () => {
+const Title = ({showModalStockFunction}) => {
 
     const span = useRef(null)
 
@@ -41,7 +43,7 @@ const Title = () => {
                     of
                 </div>
                 <div className='ml-4 flex items-center justify-center pb-7 relative'>
-                    <button className="text-2xl sm:text-base lg:text-xl truncate max-w-56 px-4 bg-transparent rounded-md font-inter text-white text-center font-bold focus:text-black focus:bg-white focus:shadow-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">Bitcoin</button>
+                    <button onClick={() => showModalStockFunction(true)} className="text-2xl sm:text-base lg:text-xl truncate max-w-56 px-4 bg-transparent rounded-md font-inter text-white text-center font-bold focus:text-black focus:bg-white focus:shadow-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">Bitcoin</button>
                     <div className='absolute text-gray-300 bottom-0 left-1/2 transform -translate-x-1/2'>Edit</div>            
                 </div>
             </div>
@@ -58,4 +60,12 @@ const Title = () => {
     )
 }
 
-export default Title
+const mapStateToProps = () => ({})
+
+const mapDispatchToProps = dispatch => ({
+    showModalStockFunction(data) {
+        dispatch(showModalStock(data))
+    }
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(Title)

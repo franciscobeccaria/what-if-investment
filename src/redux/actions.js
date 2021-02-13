@@ -1,0 +1,1 @@
+export const SHOW_MODAL_STOCK = 'SHOW_MODAL_STOCK';

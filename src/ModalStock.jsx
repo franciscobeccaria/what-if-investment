@@ -1,5 +1,7 @@
 import React, {useRef, useState, useEffect} from 'react'
 import styled from 'styled-components'
+import {showModalStock} from './redux/actionCreators'
+import {connect} from 'react-redux'
 
 import PortfolioItem from './PortfolioItem'
 
@@ -82,7 +84,7 @@ const StyledScrollbarDiv = styled.div`
 }
 `
 
-const ModalStock = () => {
+const ModalStock = ({receivedState, showModalStockFunction}) => {
 
     const wrapper = useRef(null)
     const segmentedControl = useRef(null)
@@ -95,39 +97,19 @@ const ModalStock = () => {
         console.log('onChangeInput executed')
     }
 
-    const close = () => {
-        console.log('close stockmodal')
-        setState({
-            ...state,
-            show: false,
-        })
-    }
-
-    const open = () => {
-        console.log('open stockmodal')
-        setState({
-            ...state,
-            show: true,
-        })
-    }
-
-    const [state, setState] = useState({
-        show: false,
-    })
-
     useEffect(() => {
-        if(state.show === true) {
+        if(receivedState.showModalStock === true) {
             wrapper.current.classList.remove('hidden')
             wrapper.current.classList.add('flex')
         } else {
             wrapper.current.classList.remove('flex')
             wrapper.current.classList.add('hidden')
         }
-    }, [state.show])
+    }, [receivedState.showModalStock])
 
     return (
-        <div onClick={() => close()} ref={wrapper} className='fixed top-0 left-0 w-screen h-screen bg-black hidden items-center justify-center' style={{backgroundColor: '#000000de'}}>
-            <div className='max-w-90vw w-170 h-2/3 bg-gray-400 rounded-lg flex flex-col items-center p-1 md:p-8'>
+        <div onClick={() => showModalStockFunction(false)} ref={wrapper} className='fixed top-0 left-0 w-screen h-screen bg-black hidden items-center justify-center' style={{backgroundColor: '#000000de'}}>
+            <div onClick={e => e.stopPropagation()} className='max-w-90vw w-170 h-2/3 bg-gray-400 rounded-lg flex flex-col items-center p-1 md:p-8'>
                 <input type="text" placeholder='Search...' className='w-90% mb-6 border-2 border-solid border-black rounded-lg font-inter pl-6'/>
                 <SegmentedControl className="segmented-control bg-red-500" ref={segmentedControl}>
                     <input className='one' type="radio" id="one" name="mediatype-searchbox" value="one" ref={oneRadioInput} defaultChecked={true} onChange={() => onChangeInput()}/>
@@ -157,4 +139,16 @@ const ModalStock = () => {
     )
 }
 
-export default ModalStock
+const mapStateToProps = state => (
+    {
+        receivedState: state
+    }
+)
+
+const mapDispatchToProps = dispatch => ({
+    showModalStockFunction(data) {
+        dispatch(showModalStock(data))
+    }
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(ModalStock)
