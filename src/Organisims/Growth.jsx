@@ -3,7 +3,10 @@ import { HiTrendingUp, HiTrendingDown } from "react-icons/hi";
 import {connect} from 'react-redux'
 import { createChart } from 'lightweight-charts';
 
-const Growth = ({inAdvanced, receivedState, totalGrowth}) => {
+const Growth = ({inAdvanced, receivedState}) => {
+
+    // inAdvanced === true when is in AdvancedPage / PortfolioPage
+    // inAdvanced === false when is in HomePage / SimplePage
 
     // Contando el %. Entran 5 letras. Ya el 6to hay que achicar la letra. 
     // 8888% entra. Le agregamos un numero y hay que ahicar la letra. 
@@ -96,7 +99,7 @@ const Growth = ({inAdvanced, receivedState, totalGrowth}) => {
                     }
                 </span>
                 {inAdvanced
-                    ? totalGrowth === undefined ? '' : <span className='text-white font-bold text-6xl'>{totalGrowth.toFixed(1)}</span>
+                    ? '100%'
                     : <span ref={growth} className='text-white font-bold text-6xl'>{receivedState.growthSimple === undefined ? '' : receivedState.growthSimple.toFixed(1)}%</span>
                 }
             </div>

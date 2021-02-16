@@ -138,7 +138,7 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
             })
         } else {
             console.log('PETICIÓN EN ADVANCED')
-            axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${stock.symbol}&interval=weekly&start=${receivedState.initialDatePortfolio}&end=${receivedState.endDatePortfolio}`, 
+            axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${stock.symbol}&interval=weekly&start=2020-02-15&end=2021-02-15`, 
             {
                 headers: {
                   'Accept': 'application/json',

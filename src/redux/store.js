@@ -134,9 +134,11 @@ const rootReducer = (state = initialStore, action) => {
     };
   }
   if (action.type === CHANGE_ITEM_PERCENTAGE) {
+    let array = state.portfolio;
+    array.filter((e) => e.symbol === action.data.symbol)[0].percentage = action.data.percentage;
     return {
       ...state,
-      portfolio: [...state.portfolio],
+      portfolio: array,
     };
   }
   return state;

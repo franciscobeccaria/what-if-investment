@@ -100,9 +100,32 @@ const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDateP
 
   const amount = useRef(null)
 
+  const [state, setState] = useState({
+    totalEarned: undefined,
+    totalGrowth: undefined,
+  })
+
   useEffect(() => {
     changeAmountAdvancedFunction(amount.current.getRawValue().slice(1))
   },[])
+
+  useEffect(() => {
+    let totalAmount = receivedState.amountAdvanced
+    let arrayEarned = []
+    let arrayGrowth = []
+    receivedState.portfolio.forEach(e => {
+      let initialPrice = e.data[0].close
+      let endPrice = e.data[e.data.length - 1].close
+      let partialEarned = endPrice / initialPrice * e.percentage * totalAmount / 100
+      let partialGrowth = (endPrice / initialPrice - 1) * 100
+      arrayEarned.push(parseInt(partialEarned.toFixed(2)))
+      arrayGrowth.push(parseInt(partialGrowth.toFixed(2)))
+    })
+    const reducer = (accumulator, currentValue) => accumulator + currentValue;
+    if(arrayEarned.length !== 0 && arrayGrowth.length !== 0) {
+      setState({totalEarned: arrayEarned.reduce(reducer), totalGrowth: (arrayEarned.reduce(reducer) / totalAmount - 1) * 100})
+    }
+  }, [receivedState])
 
     return (
         <>
@@ -161,9 +184,10 @@ const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDateP
                   </div>
                 </div>
                 <div className='results h-full p-2 mt-3'>
-                  <Info propsStyles={{margin: '0', width: '100%'}} text="Now you would have" number="220000" />
-                  <Info propsStyles={{width: '100%', margin: '8px 0'}} text="You would have earned" number="120000" showGrowth />
-                  <Growth inAdvanced />
+                  {console.log('TOTAL EARNED', state.totalEarned)}
+                  <Info propsStyles={{margin: '0', width: '100%'}} text="Now you would have" number={state.totalEarned === undefined ? '-' : state.totalEarned.toString()} />
+                  <Info propsStyles={{width: '100%', margin: '8px 0'}} text="You would have earned" number={state.totalEarned === undefined ? '-' : (state.totalEarned - receivedState.amountAdvanced).toString()} showGrowth />
+                  <Growth inAdvanced totalGrowth={state.totalGrowth} />
                   {/* <div className='w-full bg-red-500'></div> */}
                 </div>
                 <div className='graph h-full flex items-center justify-center p-2 '>
@@ -174,7 +198,7 @@ const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDateP
               </StyledDiv>
             </div>
             <ModalStock where={'inAdvanced'}/>
-            <ModalPortfolio/>
+            <ModalPortfolio/>''
         </>
     )
 }

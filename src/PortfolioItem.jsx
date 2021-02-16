@@ -164,7 +164,7 @@ const PortfolioItem = ({inSimple,
           setPercentage(e.percentage)
         }
       })
-    }, [receivedState.portfolio])
+    }, [receivedState])
 
     return (
                       <div onClick={() => handleOnClick()} className='w-full h-14 flex items-center justify-center mb-2'>

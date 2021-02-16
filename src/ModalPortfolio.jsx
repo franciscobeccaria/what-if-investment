@@ -5,7 +5,7 @@ import Nouislider from "nouislider-react";
 import "nouislider/distribute/nouislider.css";
 import "./index.css"
 import { connect } from 'react-redux';
-import {showModalPortfolio} from './redux/actionCreators'
+import {showModalPortfolio, changeItemPercentage} from './redux/actionCreators'
 import PortfolioItem from './PortfolioItem';
 import ModalPortfolioItem from './ModalPortfolioItem';
 
@@ -31,7 +31,7 @@ const Wrapper = styled.div`
 }
 `
 
-const ModalPortfolio = ({showModalPortfolioFunction, receivedState}) => {
+const ModalPortfolio = ({showModalPortfolioFunction, receivedState, changeItemPercentageFunction}) => {
 
     const myRef = useRef()
     const wrapper = useRef(null)
@@ -41,7 +41,10 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState}) => {
         range: { min: 0, max: 100 }
     })
 
-    const [percentageState, setPercentageState] = useState([])
+    const [percentageState, setPercentageState] = useState({
+        array: [],
+        update: undefined,
+    })
 
     const handleClick = () => {
         console.log(state)
@@ -53,13 +56,19 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState}) => {
 
       useEffect(() => {
           let array = []
-          for(let i = 0; i < state.value.length + 1; i++){
-        if(receivedState.portfolio[i] !== undefined) {
-            array.push({symbol: receivedState.portfolio[i].symbol, percentage: receivedState.portfolio[i].percentage})
-        }
-    }
-        setPercentageState(array)
-      }, [receivedState.portfolio])
+          /* for(let i = 0; i < state.value.length + 1; i++){
+                if(receivedState.portfolio[i] !== undefined) {
+                    array.push({symbol: receivedState.portfolio[i].symbol, percentage: receivedState.portfolio[i].percentage})
+                }
+            } */
+            receivedState.portfolio.forEach(e => {
+                array.push({symbol: e.symbol, percentage: e.percentage})
+            })
+        setPercentageState({
+            array: array,
+            update: Date.now(),
+        })
+      }, [receivedState])
     
       const handleSlide = (data) => {
         //console.log(data)
@@ -82,22 +91,13 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState}) => {
             // probar esto con console.log:
             console.log(receivedState.portfolio[i] === undefined ? 'und' : receivedState.portfolio[i].symbol, '=', (data[i] === undefined ? 100 : parseInt(data[i])) - (data[i-1] === undefined ? 0 : parseInt(data[i-1])))
             if(receivedState.portfolio[i] !== undefined) {
-                //receivedState.portfolio[i].percentage = (data[i] === undefined ? 100 : parseInt(data[i])) - (data[i-1] === undefined ? 0 : parseInt(data[i-1]))
-                let symbol = percentageState[i].symbol
-                let newP = (data[i] === undefined ? 100 : parseInt(data[i])) - (data[i-1] === undefined ? 0 : parseInt(data[i-1]))
-                console.log('newP', newP)
-                percentageState.forEach(e => e.symbol === symbol ? 
-                    setPercentageState(
-                        [
-                            {
-                                symbol,
-                                percentage: newP
-                            }
-                        ]
-                    )
-                    : ''
-                    )
-                //percentageState[i].percentage = (data[i] === undefined ? 100 : parseInt(data[i])) - (data[i-1] === undefined ? 0 : parseInt(data[i-1]))
+                const elementsIndex = percentageState.array.findIndex(element => element.symbol === receivedState.portfolio[i].symbol )
+                let newArray = percentageState.array
+                newArray[elementsIndex] = {...newArray[elementsIndex], percentage: (data[i] === undefined ? 100 : parseInt(data[i])) - (data[i-1] === undefined ? 0 : parseInt(data[i-1]))}
+                setPercentageState({
+                    array: newArray,
+                    update: Date.now()
+                });
             }
         }
         console.log('percentageState:', percentageState)
@@ -143,6 +143,14 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState}) => {
         }
     }, [receivedState.showModalPortfolio])
 
+    const sendNewPercentages = () => {
+        console.log(percentageState.array)
+
+        percentageState.array.forEach(e => {
+            changeItemPercentageFunction({symbol: e.symbol, percentage: e.percentage})
+        })
+    }
+
         return (
             <Wrapper onClick={() => showModalPortfolioFunction(false)} ref={wrapper} className='fixed top-0 left-0 w-screen h-screen bg-black z-10 flex items-center justify-center' style={{backgroundColor: '#000000de'}}>
                 <div onClick={e => e.stopPropagation()} className='w-80% h-80% bg-blue-300'>
@@ -161,13 +169,13 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState}) => {
                         />
                         <h2>Start editing to see some magic happen {"\u2728"}</h2>
                         <div>
-                            {percentageState.map((e) => 
+                            {percentageState.array.map((e) => 
                             {   console.log('pppp', e.symbol, e.percentage)
                                 return (
                                     <ModalPortfolioItem symbol={e.symbol} percentage={e.percentage} key={e.symbol + e.percentage}/>
                             )})}
                         </div>
-                        <button>Save %</button>
+                        <button onClick={() => {sendNewPercentages(); showModalPortfolioFunction(false)}}>Save %</button>
                     </div>
                 </div>
             </Wrapper>
@@ -183,6 +191,9 @@ const mapStateToProps = state => (
 const mapDispatchToProps = dispatch => ({
     showModalPortfolioFunction(data) {
         dispatch(showModalPortfolio(data))
+    },
+    changeItemPercentageFunction(data) {
+        dispatch(changeItemPercentage(data))
     }
 })
 
