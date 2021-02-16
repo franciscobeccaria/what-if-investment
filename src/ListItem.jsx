@@ -1,17 +1,17 @@
 import React, {useEffect, useState} from 'react'
+import { changeDateSimple } from './redux/actionCreators';
+import {connect} from 'react-redux'
 
-const ListItem = ({text}) => {
-
-    const [selected, setSelected] = useState('10 years ago')
+const ListItem = ({text, changeDateSimpleFunction, receivedState}) => {
 
     return (
-            <li onMouseDown={(e) => {console.log(text, selected)}} id="listbox-item-1" className="text-gray-900 cursor-default select-none hover:bg-indigo-500 hover:text-white relative py-2 pl-3 pr-6">
+            <li onMouseDown={(e) => changeDateSimpleFunction(text)} id="listbox-item-1" className="text-gray-900 cursor-default select-none hover:bg-indigo-500 hover:text-white relative py-2 pl-3 pr-6">
                 <div className="flex items-center">
                     <span className="block font-normal truncate">
                         {text}
                     </span>
                 </div>
-                {selected === text
+                {receivedState.dateSimple === text
                     ? 
                         <span className="absolute inset-y-0 right-0 flex items-center pr-2">
                             <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -25,4 +25,16 @@ const ListItem = ({text}) => {
     )
 }
 
-export default ListItem
+const mapStateToProps = state => (
+    {
+        receivedState: state
+    }
+)
+
+const mapDispatchToProps = dispatch => ({
+    changeDateSimpleFunction(id) {
+        dispatch(changeDateSimple(id))
+    }
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(ListItem)

@@ -13,14 +13,12 @@ function App() {
   return (
     <Provider store={store}>
     <Router>
-      
       <Switch>
         <Route path="/" exact>
           <HomePage/>
         </Route>
         <Route path="/advanced">
           <AdvancedPage/>
-            
         </Route>
       </Switch>
       <div className="w-full h-28 bg-gray-300"></div>

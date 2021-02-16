@@ -1,10 +1,10 @@
-import React from 'react'
+import React, {useEffect, useState, useRef} from 'react'
 
 import {Link} from 'react-router-dom';
 import Cleave from 'cleave.js/react';
 import styled from 'styled-components'
 
-import {showModalStock} from './redux/actionCreators'
+import {showModalStock, changeInitialDatePortfolio, changeEndDatePortfolio, changeAmountAdvanced} from './redux/actionCreators'
 import {connect} from 'react-redux'
 
 import Info from './Info';
@@ -15,6 +15,7 @@ import ModalStock from './ModalStock'
 
 import { SiApple } from "react-icons/si";
 import { HiFlag, HiBriefcase, HiPlus } from "react-icons/hi";
+import ModalPortfolio from './ModalPortfolio';
 
 const StyledDiv = styled.div`
 & {
@@ -95,7 +96,14 @@ const StyledScrollbarDiv = styled.div`
 }
 `
 
-const AdvancedPage = ({showModalStockFunction}) => {
+const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDatePortfolioFunction, changeEndDatePortfolioFunction, changeAmountAdvancedFunction}) => {
+
+  const amount = useRef(null)
+
+  useEffect(() => {
+    changeAmountAdvancedFunction(amount.current.getRawValue().slice(1))
+  },[])
+
     return (
         <>
             <div className="flex h-20 w-full items-center justify-center bg-gradient-to-r from-green-400 to-blue-500">
@@ -114,7 +122,6 @@ const AdvancedPage = ({showModalStockFunction}) => {
             <h1 className='font-inter font-bold text-white text-center text-2xl mb-12'>What if you invest in...</h1>
               <StyledDiv>
                 <div className='inputs flex items-center justify-around lg:justify-between flex-wrap px-5'>
-                    
                   <div className='flex flex-col items-center justify-center w-15.25rem'>
                   <div className='flex items-center justify-center pb-7 relative w-full my-2'>
                       <Cleave 
@@ -123,16 +130,18 @@ const AdvancedPage = ({showModalStockFunction}) => {
                           options={{numeral: true, numeralThousandsGroupStyle: 'thousand', prefix: '$'}}
                           value="10000"
                           maxLength='16'
+                          onChange={(e) => changeAmountAdvancedFunction(e.target.rawValue.slice(1))}
+                          ref={amount}
                       />
                       <div className='absolute text-gray-300 bottom-0 left-1/2 transform -translate-x-1/2'>Edit</div>
                   </div>
                   <div className='flex flex-col my-2 w-full'>
                     <label className='font-inter text-white mb-1' htmlFor="">Initial date</label>
-                    <input className='rounded-lg p-3' type="date"/>
+                    <input onChange={(e) => changeInitialDatePortfolioFunction(e.target.value)} className='rounded-lg p-3' type="date"/>
                   </div>
                   <div className='flex flex-col my-2 w-full'>
                     <label className='font-inter text-white mb-1' htmlFor="">End date</label>
-                    <input className='rounded-lg p-3' type="date"/>
+                    <input onChange={(e) => changeEndDatePortfolioFunction(e.target.value)} className='rounded-lg p-3' type="date"/>
                   </div>
                   </div>
                   {/* Portfolio.jsx */}
@@ -143,17 +152,12 @@ const AdvancedPage = ({showModalStockFunction}) => {
                       <HiPlus onClick={() => showModalStockFunction(true)} className='text-3xl ml-auto transition ease-in-out duration-500 transform hover:-translate-y-1 hover:scale-105 cursor-pointer' />
                     </div>
                     <StyledScrollbarDiv className='overflow-auto h-full pr-1'>
-                      <PortfolioItem/> 
-                      <PortfolioItem/> 
-                      <PortfolioItem/>                      
-                      <PortfolioItem/> 
-                      <PortfolioItem/> 
-                      <PortfolioItem/> 
-                      <PortfolioItem/> 
-                      <PortfolioItem/> 
-                      <PortfolioItem/> 
-                    </StyledScrollbarDiv>
-                                        
+                      {/* <PortfolioItem/>  */}
+                      {receivedState.portfolio.map(e => {
+                                                    return <PortfolioItem inPortfolio name={e.name} symbol={e.symbol} type={e.type} key={e.symbol}/>
+                      })
+                      }
+                    </StyledScrollbarDiv>   
                   </div>
                 </div>
                 <div className='results h-full p-2 mt-3'>
@@ -163,24 +167,37 @@ const AdvancedPage = ({showModalStockFunction}) => {
                   {/* <div className='w-full bg-red-500'></div> */}
                 </div>
                 <div className='graph h-full flex items-center justify-center p-2 '>
-                  <ChartWrapper
+                  <ChartWrapper inAdvanced
                     propsStyles={{width: '100%', margin: '0'}}
                   />
                 </div>
-                
               </StyledDiv>
             </div>
-            <ModalStock/>
+            <ModalStock where={'inAdvanced'}/>
+            <ModalPortfolio/>
         </>
     )
 }
 
-const mapStateToProps = () => ({})
+const mapStateToProps = state => (
+  {
+      receivedState: state
+  }
+)
 
 const mapDispatchToProps = dispatch => ({
     showModalStockFunction(data) {
         dispatch(showModalStock(data))
-    }
+    },
+    changeInitialDatePortfolioFunction(data) {
+      dispatch(changeInitialDatePortfolio(data))
+    },
+    changeEndDatePortfolioFunction(data) {
+      dispatch(changeEndDatePortfolio(data))
+    },
+    changeAmountAdvancedFunction(data) {
+      dispatch(changeAmountAdvanced(data))
+    },
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(AdvancedPage)

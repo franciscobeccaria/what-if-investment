@@ -1,40 +1,41 @@
 import React, {useRef, useState, useEffect} from 'react'
 import Cleave from 'cleave.js/react';
-import {showModalStock} from './redux/actionCreators'
+import {showModalStock, changeAmountSimple} from './redux/actionCreators'
 import {connect} from 'react-redux'
 
 import List from './List'
 
-const Title = ({showModalStockFunction}) => {
+const Title = ({showModalStockFunction, changeAmountSimpleFunction, receivedState}) => {
 
     const span = useRef(null)
+    const amount = useRef(null)
 
     console.log(span.current)
 
     const lengthListener = (e) => {
-        console.log(e.target.value.length)
         if(window.innerWidth > 640) {
             span.current.style.width = `${e.target.value.length * 15}px`
         }   
     }
 
-    /* useEffect(() => {
-        
-    },[]) */
+    useEffect(() => {
+        changeAmountSimpleFunction(amount.current.getRawValue().slice(1))
+    },[])
 
     return (
         <div className='flex flex-col sm:flex-row items-center justify-center w-95% sm:items-start sm:justify-start sm:w-auto'>
             <div className='font-inter text-gray-100 text-center flex items-center justify-center pb-2 sm:pb-7 lg:text-xl'>
                 What if you bought
             </div>
-            <div ref={span} className='mb-2 sm:mb-0 flex items-center justify-center pb-7 relative mx-4 w-90% sm:w-24 lg:w-28 min-w-3rem max-w-none sm:max-w-11rem lg:max-w-56'>
+            <div ref={span} className='mb-2 sm:mb-0 flex items-center justify-center pb-7 relative mx-4 w-90% sm:w-24 lg:w-28 min-w-20 max-w-none sm:max-w-11rem lg:max-w-56'>
                 <Cleave 
                     className='text-2xl sm:text-base lg:text-xl w-full px-2 bg-transparent rounded-md font-inter text-white text-center font-bold focus:text-black focus:bg-white focus:shadow-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500'
                     placeholder="Enter a number" 
                     options={{numeral: true, numeralThousandsGroupStyle: 'thousand', prefix: '$'}}
                     value="10000"
-                    onChange={(e) => lengthListener(e)}
+                    onChange={(e) => { lengthListener(e); changeAmountSimpleFunction(e.target.rawValue.slice(1));}}
                     maxLength='16'
+                    ref={amount}
                 />
                 <div className='absolute text-gray-300 bottom-0 left-1/2 transform -translate-x-1/2'>Edit</div>
             </div>
@@ -43,7 +44,9 @@ const Title = ({showModalStockFunction}) => {
                     of
                 </div>
                 <div className='ml-4 flex items-center justify-center pb-7 relative'>
-                    <button onClick={() => showModalStockFunction(true)} className="text-2xl sm:text-base lg:text-xl truncate max-w-56 px-4 bg-transparent rounded-md font-inter text-white text-center font-bold focus:text-black focus:bg-white focus:shadow-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">Bitcoin</button>
+                    <button onClick={() => showModalStockFunction(true)} className="text-2xl sm:text-base lg:text-xl truncate max-w-56 px-4 bg-transparent rounded-md font-inter text-white text-center font-bold focus:text-black focus:bg-white focus:shadow-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+                        {receivedState.investmentSimple.name}
+                    </button>
                     <div className='absolute text-gray-300 bottom-0 left-1/2 transform -translate-x-1/2'>Edit</div>            
                 </div>
             </div>
@@ -60,11 +63,18 @@ const Title = ({showModalStockFunction}) => {
     )
 }
 
-const mapStateToProps = () => ({})
+const mapStateToProps = state => (
+    {
+        receivedState: state
+    }
+)
 
 const mapDispatchToProps = dispatch => ({
     showModalStockFunction(data) {
         dispatch(showModalStock(data))
+    },
+    changeAmountSimpleFunction(data) {
+        dispatch(changeAmountSimple(data))
     }
 })
 

@@ -7,8 +7,13 @@ const Info = ({propsClassList, text, showGrowth, number, propsStyles}) => {
             <div className='font-inter text-xl sm:text-2xl font-medium'>
                 {text}
             </div>
-            <div className={`font-inter text-2xl font-bold ml-auto pl-4 ${showGrowth && number > 0 ? 'text-positive' : ''}`}>
-                $ {new Intl.NumberFormat('en-US').format(number)}
+            <div className={`font-inter text-2xl font-bold ml-auto pl-4 ${showGrowth ? number > 0 ? 'text-positive' : 'text-red-600' : ''}`}>
+                {console.log('NUMBER', number)}
+                $ {number === '-'
+                    ? '-'
+                    : new Intl.NumberFormat('en-US').format(parseInt(number).toFixed(2))
+                }
+                
             </div>
         </div>
     )

@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react'
 import ListItem from './ListItem'
 import styled from 'styled-components'
+import {connect} from 'react-redux'
 
 const StyledScrollbarUl = styled.ul`
 &::-webkit-scrollbar-track
@@ -26,7 +27,7 @@ const StyledScrollbarUl = styled.ul`
 }
 `
 
-const List = () => {
+const List = ({receivedState}) => {
 
     const results = useRef(null)
     const wrapper = useRef(null)
@@ -36,8 +37,6 @@ const List = () => {
     const [state, setState] = useState({
         openResults: false,
     })
-
-    const [selected, setSelected] = useState('10 years ago')
 
     const open = () => {
         setState({
@@ -75,15 +74,10 @@ const List = () => {
             <div ref={wrapper} className='cursor-pointer'>
                 <div className="relative">
                     <button ref={button} onClick={() => open()} type="button" className="text-2xl sm:text-base lg:text-xl font-bold px-4 relative flex items-center justify-center font-inter text-white focus:text-black bg-transparent focus:bg-white rounded-md focus:shadow-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
-                        {selected}
+                        {receivedState.dateSimple}
                     </button>
                     <div ref={results} className="w-full hidden absolute mt-1 z-10 rounded-md bg-white shadow-lg">
                         <StyledScrollbarUl ref={listItems} tabIndex="-1" role="listbox" aria-labelledby="listbox-label" aria-activedescendant="listbox-item-3" className="max-h-56 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                            <ListItem text='70 years ago'/>
-                            <ListItem text='60 years ago'/>
-                            <ListItem text='50 years ago'/>
-                            <ListItem text='40 years ago'/>
-                            <ListItem text='35 years ago'/>
                             <ListItem text='30 years ago'/>
                             <ListItem text='25 years ago'/>
                             <ListItem text='20 years ago'/>
@@ -103,9 +97,10 @@ const List = () => {
                             <ListItem text='20 days ago'/>
                             <ListItem text='15 days ago'/>
                             <ListItem text='10 days ago'/>
-                            <ListItem text='7 week ago'/>
+                            <ListItem text='7 days ago'/>
                             <ListItem text='5 days ago'/>
-                            <ListItem text='4 days ago'/>
+                            {/* Tradier API no entrega datos por hora */}
+                            {/* <ListItem text='4 days ago'/>
                             <ListItem text='3 days ago'/>
                             <ListItem text='2 days ago'/>
                             <ListItem text='1 day ago'/>
@@ -117,7 +112,7 @@ const List = () => {
                             <ListItem text='45 minutes ago'/>
                             <ListItem text='30 minutes ago'/>
                             <ListItem text='15 minutes ago'/>
-                            <ListItem text='10 minutes ago'/>
+                            <ListItem text='10 minutes ago'/> */}
                         </StyledScrollbarUl>
                     </div>
                 </div>
@@ -125,4 +120,12 @@ const List = () => {
     )
 }
 
-export default List
+const mapStateToProps = state => (
+    {
+        receivedState: state
+    }
+)
+
+const mapDispatchToProps = () => ({})
+
+export default connect(mapStateToProps, mapDispatchToProps)(List)
