@@ -40,6 +40,11 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
     const div = useRef(null)
     const divWrapper = useRef(null)
 
+    const [stock, setStock] = useState({
+        name: undefined,
+        symbol: undefined,
+    })
+
     const [state, setState] = useState({
         openResults: false,
     })
@@ -93,7 +98,37 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
         }
     },[state.openResults])
 
+    /* useEffect(() => {
+        console.log('setStock', inSimple)
+        console.log(receivedState.selectedInAdvancedChart)
+        console.log('2. Listen Stock in ReceivedState')
+        if(inSimple === true) {
+            setStock({
+                name: receivedState.investmentSimple.name,
+                symbol: receivedState.investmentSimple.symbol
+            })
+        } else {
+            setStock({
+                name: receivedState.selectedInAdvancedChart.name,
+                symbol: receivedState.selectedInAdvancedChart.symbol
+            })
+        }
+    }, [receivedState.investmentSimple, inSimple, receivedState.selectedInAdvancedChart]) */
+
     useEffect(() => {
+        console.log('2. Listen Stock in ReceivedState (setStock)', receivedState.selectedInAdvancedChart)
+        if(inSimple === true) {
+            setStock({
+                name: receivedState.investmentSimple.name,
+                symbol: receivedState.investmentSimple.symbol
+            })
+        } else {
+            console.log('2.5. setStock advanced')
+            setStock({
+                name: receivedState.selectedInAdvancedChart.name,
+                symbol: receivedState.selectedInAdvancedChart.symbol
+            })
+        }
         if(inSimple === true) {
             let currentDate = new Date()
             let todayMonth = currentDate.getMonth() + 1
@@ -107,7 +142,6 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
             if(receivedState.dateSimple.includes('month')){
                 let now = new Date()
                 now.setMonth(now.getMonth() - receivedState.dateSimple.slice(0,2))
-                console.log(now)
                 let nowMonth = now.getMonth() + 1
                 initialDate = `${now.getFullYear()}-${nowMonth < 10 ? '0'+nowMonth : nowMonth}-${now.getDate() < 10 ? '0'+now.getDate() : now.getDate()}`
                 interval = 'weekly'
@@ -115,12 +149,10 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
             if(receivedState.dateSimple.includes('day')) {
                let now = new Date()
                now.setDate(now.getDate() - receivedState.dateSimple.slice(0,2))
-               console.log(now)
                let nowMonth = now.getMonth() + 1
                initialDate = `${now.getFullYear()}-${nowMonth < 10 ? '0'+nowMonth : nowMonth}-${now.getDate() < 10 ? '0'+now.getDate() : now.getDate()}`
                interval = 'daily'
             }
-            console.log(initialDate)
             axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${receivedState.investmentSimple.symbol}&interval=${interval}&start=${initialDate}&end=${today}`, 
             {
                 headers: {
@@ -130,14 +162,13 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
             }
             )
             .then(resp => {
-                console.log(resp.data)
-                console.log(resp.data.history.day)
                 let dataArray = []
                 resp.data.history.day.forEach(e => dataArray.push({time: e.date, value: e.close}))
                 setData(dataArray)
             })
         } else {
-            console.log('PETICIÓN EN ADVANCED')
+            /* console.log('PETICIÓN EN ADVANCED')
+            console.log('3. Load Stock Data (read stock)', stock)
             axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${stock.symbol}&interval=weekly&start=${receivedState.initialDatePortfolio}&end=${receivedState.endDatePortfolio}`, 
             {
                 headers: {
@@ -148,15 +179,37 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
             )
             .then(resp => {
                 if(resp.data.history !== null) {
-                    console.log(resp.data)
-                    console.log(resp.data.history.day)
                     let dataArray = []
                     resp.data.history.day.forEach(e => dataArray.push({time: e.date, value: e.close}))
                     setData(dataArray)
+                    console.log('4. setData of ChartWrapper', dataArray)
+                }
+            }) */
+        }
+    }, [receivedState.dateSimple, receivedState.investmentSimple, receivedState.selectedInAdvancedChart, inSimple])
+
+    useEffect(() => {
+        if(inSimple !== true) {
+            console.log('PETICIÓN EN ADVANCED')
+            console.log('3. Load Stock Data (read stock)', stock)
+            axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${stock.symbol}&interval=weekly&start=${receivedState.initialDatePortfolio}&end=${receivedState.endDatePortfolio}`, 
+            {
+                headers: {
+                  'Accept': 'application/json',
+                  'Authorization': 'Bearer ogG8k3GwGImUQXmAjvzxl5tIWapI',
+                }
+            }
+            )
+            .then(resp => {
+                if(resp.data.history !== null) {
+                    let dataArray = []
+                    resp.data.history.day.forEach(e => dataArray.push({time: e.date, value: e.close}))
+                    setData(dataArray)
+                    console.log('4. setData of ChartWrapper', dataArray)
                 }
             })
         }
-    }, [receivedState.dateSimple, receivedState.investmentSimple, receivedState.selectedInAdvancedChart])
+    }, [stock])
 
     useEffect(() => {
         window.addEventListener('resize', () => {
@@ -173,7 +226,9 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
         let areaSeries = chart.addAreaSeries();
         areaSeries.setData(data);
         chart.timeScale().fitContent();
-        if(data.length !== 0) {
+        console.log('5. set data in chart', data, inSimple)
+        if(data.length !== 0 && inSimple === true) {
+            console.log(inSimple)
             console.log(data[0].value, data[data.length -1].value)
             changePricesSimpleFunction({
                 initial: data[0].value,
@@ -182,25 +237,6 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
             })
         }
     }, [data])
-
-    const [stock, setStock] = useState({
-        name: undefined,
-        symbol: undefined,
-    })
-
-    useEffect(() => {
-        if(inSimple === true) {
-            setStock({
-                name: receivedState.investmentSimple.name,
-                symbol: receivedState.investmentSimple.symbol
-            })
-        } else {
-            setStock({
-                name: receivedState.selectedInAdvancedChart.name,
-                symbol: receivedState.selectedInAdvancedChart.symbol
-            })
-        }
-    }, [receivedState.investmentSimple, inSimple, receivedState.selectedInAdvancedChart])
 
     return (
         <div className='flex flex-col items-center justify-center w-170 max-w-90vw m-6' style={propsStyles}>
@@ -220,7 +256,7 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
                 }
                 <StyledScrollbarDiv ref={results} className='h-0 overflow-auto absolute top-full bg-gray-400 z-10 w-full rounded-lg shadow-lg flex flex-col items-center px-6 py-0 transition-all ease-in-out duration-500'>
                     {receivedState.portfolio.map(e => {
-                                                        return <PortfolioItem inAdvancedChart inPortfolio inSimple={inSimple} name={e.name} symbol={e.symbol} type={e.type} key={e.symbol}/>
+                            return <PortfolioItem inAdvancedChart inPortfolio inSimple={inSimple} name={e.name} symbol={e.symbol} type={e.type} key={e.symbol}/>
                         })
                     }
                 </StyledScrollbarDiv>

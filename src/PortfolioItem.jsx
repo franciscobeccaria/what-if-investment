@@ -2,7 +2,7 @@ import React, {useState, useRef, useEffect} from 'react'
 import styled from 'styled-components'
 import axios from 'axios'
 import {connect} from 'react-redux'
-import {showModalStock, changeInvestmentSimple, changePortfolio, deleteFromPortfolio, changeItemFromPortfolio, changeSelectedInAdvancedChart, showModalPortfolio} from './redux/actionCreators'
+import {showModalStock, changeInvestmentSimple, changeItemData, changePortfolio, deleteFromPortfolio, changeItemFromPortfolio, changeSelectedInAdvancedChart, showModalPortfolio} from './redux/actionCreators'
 
 import { FiDelete, FiEdit } from "react-icons/fi";
 import { SiApple } from "react-icons/si";
@@ -110,6 +110,7 @@ const PortfolioItem = ({inSimple,
                         changeItemFromPortfolioFunction,
                         changeSelectedInAdvancedChartFunction,
                         showModalPortfolioFunction,
+                        changeItemDataFunction,
                         receivedState}) => {
 
     const stockDataRequest = (symbol) => {
@@ -126,7 +127,6 @@ const PortfolioItem = ({inSimple,
         )
         .then(resp => {
             if(resp.data.history !== null) {
-                console.log(resp.data.history.day)
                 changePortfolioFunction(
                   {type: type, symbol: symbol, name: name, percentage: 0, data: resp.data.history.day}
                 )
@@ -144,6 +144,7 @@ const PortfolioItem = ({inSimple,
       } else if (inSimple) {
         changeInvestmentSimpleFunction({type: type, symbol: symbol, name: name})
       } else if (inAdvancedChart) {
+        console.log('1. changeSelectedInAdvancedChart')
         changeSelectedInAdvancedChartFunction({type: type, symbol: symbol, name: name})
       }
       showModalStockFunction(false)
@@ -231,6 +232,9 @@ const mapDispatchToProps = dispatch => ({
     },
     changeSelectedInAdvancedChartFunction(data) {
       dispatch(changeSelectedInAdvancedChart(data))
+    },
+    changeItemDataFunction(data) {
+      dispatch(changeItemData(data))
     }
 })
 

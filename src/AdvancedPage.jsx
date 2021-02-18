@@ -4,7 +4,7 @@ import {Link} from 'react-router-dom';
 import Cleave from 'cleave.js/react';
 import styled from 'styled-components'
 
-import {showModalStock, changeInitialDatePortfolio, changeEndDatePortfolio, changeAmountAdvanced} from './redux/actionCreators'
+import {showModalStock, changeInitialDatePortfolio, changeEndDatePortfolio, changeAmountAdvanced, changeItemData} from './redux/actionCreators'
 import {connect} from 'react-redux'
 
 import Info from './Info';
@@ -16,6 +16,7 @@ import ModalStock from './ModalStock'
 import { SiApple } from "react-icons/si";
 import { HiFlag, HiBriefcase, HiPlus } from "react-icons/hi";
 import ModalPortfolio from './ModalPortfolio';
+import axios from 'axios';
 
 const StyledDiv = styled.div`
 & {
@@ -96,7 +97,7 @@ const StyledScrollbarDiv = styled.div`
 }
 `
 
-const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDatePortfolioFunction, changeEndDatePortfolioFunction, changeAmountAdvancedFunction}) => {
+const AdvancedPage = ({changeItemDataFunction, showModalStockFunction, receivedState, changeInitialDatePortfolioFunction, changeEndDatePortfolioFunction, changeAmountAdvancedFunction}) => {
 
   const amount = useRef(null)
 
@@ -109,6 +110,7 @@ const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDateP
     changeAmountAdvancedFunction(amount.current.getRawValue().slice(1))
   },[])
 
+  // Calculando precio inicial y final de cada acción. 
   useEffect(() => {
     let totalAmount = receivedState.amountAdvanced
     let arrayEarned = []
@@ -126,6 +128,75 @@ const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDateP
       setState({totalEarned: arrayEarned.reduce(reducer), totalGrowth: (arrayEarned.reduce(reducer) / totalAmount - 1) * 100})
     }
   }, [receivedState])
+
+  const [growth, setGrowth] = useState([])
+
+  useEffect(() => {
+    let totalAmount = receivedState.amountAdvanced
+    let sumArrays = []
+    receivedState.portfolio.forEach(e => {
+      let initialPrice = e.data[0].close
+      let initialAmountInStock = e.percentage * totalAmount / 100
+      let array = {
+        symbol: e.symbol,
+        growth: [],
+      }
+      e.data.forEach(x => {
+        array.growth.push({time: x.date, value: initialAmountInStock * x.close / initialPrice})
+      })
+      sumArrays.push(array)
+    })
+    // En Sumarrays tenes la ganancia o growth por cada accion y por cada dia. Tenes que sumar cada key entre ellas pero guardando la date de la key. 
+    let finalArrayToData = []
+    console.log(sumArrays)
+    if(sumArrays.length > 0) {
+      for (let i = 0; i < sumArrays[0].growth.length; i++) {
+        //console.log('SUMA', sumArrays[0].growth[i], sumArrays[1].growth[i])
+        //console.log('EACH', sumArrays[0].growth[i].time, sumArrays[0].growth[i].value + sumArrays[1].growth[i].value)
+        //finalArrayToData.push({time: sumArrays[0].growth[i].time, value: sumArrays[0].growth[i].value + sumArrays[1].growth[i].value})
+        
+        let arrayWithValues = []
+        // No encuentra value a la hora de Update dates. 
+        console.log('sumArray, no encuentra .value', sumArrays)
+        for (let x = 0; x < sumArrays.length; x++) {
+          arrayWithValues.push(sumArrays[x].growth[i].value)
+        }
+        const reducer = (accumulator, currentValue) => accumulator + currentValue;
+        //console.log({time: sumArrays[0].growth[i].time, value: arrayWithValues})
+        finalArrayToData.push({time: sumArrays[0].growth[i].time, value: arrayWithValues.reduce(reducer)})
+    }
+    console.log('FINAL ARRAY', finalArrayToData)
+    setGrowth(finalArrayToData)
+    // CREO QUE DEJE TODO ANDANDO. PERO HAY QUE REVISAR. EJEMPLO SI ELIMINO O AGREGO STOCKS, CAMBIO %, CAMBIO FECHAS. ETC. CAMBIO AMOUNT. 
+    // TAMBIÉN ESTO SE ESTÁ DISPARANDO SIEMPRE QUE CAMBIE EL GLOBAL STATE, ESE ES UN TEMA, NECESITAMOS QUE CARGUE CUANDO PASEN CIERTAS COSAS. 
+    }
+  }, [receivedState])
+
+  // Recalculando precios cuando hay un cambio de fechas y necesitamos actualizar la data con una nueva petición
+  const updateDataStock = (symbol) => {
+    axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${symbol}&interval=weekly&start=${receivedState.initialDatePortfolio}&end=${receivedState.endDatePortfolio}`, 
+      {
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ogG8k3GwGImUQXmAjvzxl5tIWapI',
+          }
+      }
+      )
+      .then(resp => {
+          if(resp.data.history !== null) {
+              console.log(resp.data.history.day)
+              changeItemDataFunction(
+                {symbol: symbol, data: resp.data.history.day}
+              )
+          }
+      })
+  }
+
+  const handleOnClickUpdateDates = () => {
+    receivedState.portfolio.forEach(e => {
+      updateDataStock(e.symbol)
+    })
+  }
 
     return (
         <>
@@ -166,6 +237,9 @@ const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDateP
                     <label className='font-inter text-white mb-1' htmlFor="">End date</label>
                     <input onChange={(e) => changeEndDatePortfolioFunction(e.target.value)} className='rounded-lg p-3' type="date"/>
                   </div>
+                  <div>
+                    <button onClick={() => handleOnClickUpdateDates()} className='bg-blue-500 text-white p-2 rounded-lg font-medium hover:bg-blue-700 transition ease-in-out duration-500 transform hover:-translate-y-1 hover:scale-102 cursor-pointer'>Update dates data</button>
+                  </div>
                   </div>
                   {/* Portfolio.jsx */}
                   <div className='relative bg-gray-400 w-68 h-80 mt-4 md:mt-0 mx-2 sm:mx-0 rounded-lg pt-14 px-2 pb-2'>
@@ -177,7 +251,7 @@ const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDateP
                     <StyledScrollbarDiv className='overflow-auto h-full pr-1'>
                       {/* <PortfolioItem/>  */}
                       {receivedState.portfolio.map(e => {
-                                                    return <PortfolioItem inPortfolio name={e.name} symbol={e.symbol} type={e.type} key={e.symbol}/>
+                          return <PortfolioItem inPortfolio name={e.name} symbol={e.symbol} type={e.type} key={e.symbol}/>
                       })
                       }
                     </StyledScrollbarDiv>   
@@ -187,7 +261,7 @@ const AdvancedPage = ({showModalStockFunction, receivedState, changeInitialDateP
                   {console.log('TOTAL EARNED', state.totalEarned)}
                   <Info propsStyles={{margin: '0', width: '100%'}} text="Now you would have" number={state.totalEarned === undefined ? '-' : state.totalEarned.toString()} />
                   <Info propsStyles={{width: '100%', margin: '8px 0'}} text="You would have earned" number={state.totalEarned === undefined ? '-' : (state.totalEarned - receivedState.amountAdvanced).toString()} showGrowth />
-                  <Growth inAdvanced totalGrowth={state.totalGrowth} />
+                  <Growth inAdvanced totalGrowth={state.totalGrowth} dataByProps={growth} />
                   {/* <div className='w-full bg-red-500'></div> */}
                 </div>
                 <div className='graph h-full flex items-center justify-center p-2 '>
@@ -222,6 +296,9 @@ const mapDispatchToProps = dispatch => ({
     changeAmountAdvancedFunction(data) {
       dispatch(changeAmountAdvanced(data))
     },
+    changeItemDataFunction(data) {
+      dispatch(changeItemData(data))
+    }
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(AdvancedPage)

@@ -15,6 +15,7 @@ import {
   CHANGE_END_DATE_PORTFOLIO,
   CHANGE_AMOUNT_ADVANCED,
   CHANGE_ITEM_PERCENTAGE,
+  CHANGE_ITEM_DATA,
 } from './actions';
 
 const initialStore = {
@@ -48,7 +49,6 @@ const initialStore = {
 // Devuelve el nuevo estado
 const rootReducer = (state = initialStore, action) => {
   console.log(action);
-  console.log(state);
   if (action.type === SHOW_MODAL_STOCK) {
     return {
       ...state,
@@ -136,6 +136,14 @@ const rootReducer = (state = initialStore, action) => {
   if (action.type === CHANGE_ITEM_PERCENTAGE) {
     let array = state.portfolio;
     array.filter((e) => e.symbol === action.data.symbol)[0].percentage = action.data.percentage;
+    return {
+      ...state,
+      portfolio: array,
+    };
+  }
+  if (action.type === CHANGE_ITEM_DATA) {
+    let array = state.portfolio;
+    array.filter((e) => e.symbol === action.data.symbol)[0].data = action.data.data;
     return {
       ...state,
       portfolio: array,

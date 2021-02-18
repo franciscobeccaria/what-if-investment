@@ -3,7 +3,7 @@ import { HiTrendingUp, HiTrendingDown } from "react-icons/hi";
 import {connect} from 'react-redux'
 import { createChart } from 'lightweight-charts';
 
-const Growth = ({inAdvanced, receivedState, totalGrowth}) => {
+const Growth = ({inAdvanced, receivedState, totalGrowth, dataByProps}) => {
 
     // Contando el %. Entran 5 letras. Ya el 6to hay que achicar la letra. 
     // 8888% entra. Le agregamos un numero y hay que ahicar la letra. 
@@ -16,8 +16,6 @@ const Growth = ({inAdvanced, receivedState, totalGrowth}) => {
     useEffect(() => {
         // Luego va a cambiar el click por un cambio en el estado. Y el useEffect va a escuchar si cambia este estado. 
         
-            console.log('listener cambiar tamaño letra de growth')
-            console.log(growth.current !== null)
             if(growth.current !== null) {
                 switch (growth.current.innerHTML.length) {
                     // 12345%
@@ -66,7 +64,7 @@ const Growth = ({inAdvanced, receivedState, totalGrowth}) => {
         let areaSeries = chart.addAreaSeries();
         let arrayGrowth = []
         if(inAdvanced === true) {
-            console.log('inAdvanced en Growth')
+            arrayGrowth = dataByProps
         } else {
             receivedState.pricesSimple.all.forEach(e => {
                 arrayGrowth.push({time: e.time, value: e.value / receivedState.pricesSimple.initial * receivedState.amountSimple})
@@ -74,7 +72,7 @@ const Growth = ({inAdvanced, receivedState, totalGrowth}) => {
         }
         areaSeries.setData(arrayGrowth);
         chart.timeScale().fitContent();
-    }, [receivedState.pricesSimple.all, receivedState.amountSimple])
+    }, [receivedState.pricesSimple.all, receivedState.amountSimple, dataByProps])
 
     return (
         <div className='flex w-170 max-w-90vw sm:h-44 flex-col-reverse sm:flex-row' style={inAdvanced ? {width: '100%', flexDirection: 'column-reverse', height: 'fit-content'} : {}}>
@@ -84,7 +82,7 @@ const Growth = ({inAdvanced, receivedState, totalGrowth}) => {
             <div className={`w-full sm:w-45% rounded-lg h-28 sm:h-full mb-4 sm:mb-0 sm:ml-4
                             flex items-center justify-center text-6xl pr-6 sm:pr-2 p-2 
                             ${inAdvanced
-                                ? 'bg-blue-500'
+                                ? totalGrowth < 0 ? 'bg-red-600' : 'bg-positive'
                                 : receivedState.growthSimple < 0 ? 'bg-red-600' : 'bg-positive'
                         }`
                         }
@@ -96,7 +94,7 @@ const Growth = ({inAdvanced, receivedState, totalGrowth}) => {
                     }
                 </span>
                 {inAdvanced
-                    ? totalGrowth === undefined ? '' : <span className='text-white font-bold text-6xl'>{totalGrowth.toFixed(1)}</span>
+                    ? totalGrowth === undefined ? '' : <span className='text-white font-bold text-6xl'>{totalGrowth.toFixed(1)}%</span>
                     : <span ref={growth} className='text-white font-bold text-6xl'>{receivedState.growthSimple === undefined ? '' : receivedState.growthSimple.toFixed(1)}%</span>
                 }
             </div>

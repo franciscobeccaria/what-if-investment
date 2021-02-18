@@ -89,7 +89,7 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState, changeItemPe
         for(let i = 0; i < state.value.length + 1; i++){
             //console.log(i, '=', (data[i] === undefined ? 100 : parseInt(data[i])) - (data[i-1] === undefined ? 0 : parseInt(data[i-1])))
             // probar esto con console.log:
-            console.log(receivedState.portfolio[i] === undefined ? 'und' : receivedState.portfolio[i].symbol, '=', (data[i] === undefined ? 100 : parseInt(data[i])) - (data[i-1] === undefined ? 0 : parseInt(data[i-1])))
+            //console.log(receivedState.portfolio[i] === undefined ? 'und' : receivedState.portfolio[i].symbol, '=', (data[i] === undefined ? 100 : parseInt(data[i])) - (data[i-1] === undefined ? 0 : parseInt(data[i-1])))
             if(receivedState.portfolio[i] !== undefined) {
                 const elementsIndex = percentageState.array.findIndex(element => element.symbol === receivedState.portfolio[i].symbol )
                 let newArray = percentageState.array
@@ -117,7 +117,6 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState, changeItemPe
                 array.push(0)
               }
           //return array
-          console.log(state)
           if(array.length > 1) {
             array.pop()
           }
@@ -125,7 +124,6 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState, changeItemPe
             value: array,
             range: { min: 0, max: 100 }
           })
-          console.log(state)
       }
 
       useEffect(() => {
@@ -144,8 +142,6 @@ const ModalPortfolio = ({showModalPortfolioFunction, receivedState, changeItemPe
     }, [receivedState.showModalPortfolio])
 
     const sendNewPercentages = () => {
-        console.log(percentageState.array)
-
         percentageState.array.forEach(e => {
             changeItemPercentageFunction({symbol: e.symbol, percentage: e.percentage})
         })

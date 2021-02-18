@@ -14,6 +14,7 @@ import {
   CHANGE_AMOUNT_ADVANCED,
   SHOW_MODAL_PORTFOLIO,
   CHANGE_ITEM_PERCENTAGE,
+  CHANGE_ITEM_DATA,
 } from './actions';
 
 const showModalStock = (data) => ({
@@ -91,6 +92,11 @@ const changeItemPercentage = (data) => ({
   data,
 });
 
+const changeItemData = (data) => ({
+  type: CHANGE_ITEM_DATA,
+  data,
+});
+
 export {
   showModalStock,
   changeAmountSimple,
@@ -107,4 +113,5 @@ export {
   changeAmountAdvanced,
   showModalPortfolio,
   changeItemPercentage,
+  changeItemData,
 };
