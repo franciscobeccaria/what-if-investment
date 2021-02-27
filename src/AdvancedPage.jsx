@@ -242,7 +242,7 @@ const AdvancedPage = ({changeItemDataFunction, showModalStockFunction, receivedS
                   </div>
                   </div>
                   {/* Portfolio.jsx */}
-                  <div className='relative bg-gray-400 w-68 h-80 mt-4 md:mt-0 mx-2 sm:mx-0 rounded-lg pt-14 px-2 pb-2'>
+                  <div className='relative bg-gray-400 w-64 h-80 mt-4 md:mt-0 mx-2 sm:mx-0 rounded-lg pt-14 px-2 pb-2'>
                     <div className='absolute top-0 left-0 bg-gray-100 rounded-t-lg h-12 w-full flex items-center px-3'>
                       <HiBriefcase className='text-xl mr-3'/>
                       <span className='font-inter text-lg font-semibold'>Portfolio</span>

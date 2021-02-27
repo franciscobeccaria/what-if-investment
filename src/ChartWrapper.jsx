@@ -122,6 +122,12 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
                 name: receivedState.investmentSimple.name,
                 symbol: receivedState.investmentSimple.symbol
             })
+        } else if (receivedState.selectedInAdvancedChart.type === 'coin' || receivedState.selectedInAdvancedChart.type === 'token') { 
+            setStock({
+                type: receivedState.selectedInAdvancedChart.type,
+                name: receivedState.selectedInAdvancedChart.name,
+                symbol: receivedState.selectedInAdvancedChart.symbol
+            })
         } else {
             console.log('2.5. setStock advanced')
             setStock({
@@ -190,6 +196,18 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
 
     useEffect(() => {
         if(inSimple !== true) {
+            console.log(stock, receivedState.portfolio)
+            if(stock.type) {
+                let dataArray = []
+                receivedState.portfolio.forEach(e => {
+                    if(e.symbol === stock.symbol){
+                        e.data.forEach(i => {
+                            dataArray.push({time: i.date, value: i.close})
+                        })
+                        setData(dataArray)
+                    }
+                })
+            } else {
             console.log('PETICIÓN EN ADVANCED')
             console.log('3. Load Stock Data (read stock)', stock)
             axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${stock.symbol}&interval=weekly&start=${receivedState.initialDatePortfolio}&end=${receivedState.endDatePortfolio}`, 
@@ -208,6 +226,7 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
                     console.log('4. setData of ChartWrapper', dataArray)
                 }
             })
+            }
         }
     }, [stock])
 

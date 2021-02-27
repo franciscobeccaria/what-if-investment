@@ -111,6 +111,7 @@ const PortfolioItem = ({inSimple,
                         changeSelectedInAdvancedChartFunction,
                         showModalPortfolioFunction,
                         changeItemDataFunction,
+                        cryptoId,
                         receivedState}) => {
 
     const stockDataRequest = (symbol) => {
@@ -127,6 +128,7 @@ const PortfolioItem = ({inSimple,
         )
         .then(resp => {
             if(resp.data.history !== null) {
+              console.log({type: type, symbol: symbol, name: name, percentage: 0, data: resp.data.history.day})
                 changePortfolioFunction(
                   {type: type, symbol: symbol, name: name, percentage: 0, data: resp.data.history.day}
                 )
@@ -135,12 +137,72 @@ const PortfolioItem = ({inSimple,
       }
     }
 
+    const cryptoDataRequest = (id) => {
+      if(receivedState.initialDatePortfolio === undefined || receivedState.endDatePortfolio === undefined) {
+        alert('Please select the dates first')
+      } else {
+              class MyDate extends Date {                
+                addDays(days) {
+                    var date = new Date(this.valueOf());
+                    date.setDate(date.getDate() + days);
+                    return date;
+                }
+              }
+            
+            let finish = false
+            let initialDate = receivedState.initialDatePortfolio
+            let endDate = receivedState.endDatePortfolio // Construimos todo para traer un día. Ej: pongo 2020-10-15, trae 2020-10-14. Así que habría que hacer algo ahí. 
+            let arrayData = []
+
+            // EL PLAN
+            // El plan es que itere cada dia entregado y si uno de esos días es === a endDate se ejecuta finish = true
+
+            // Debería arreglar errores:
+            //      - Inicio dia 3. Final dia 2. Error. 
+            //      - Inicio dia 3. Final dia 3. Ver que pasa. 
+
+            console.log('disparamos')
+            const api = (initialDate, endDate) => {
+                let date = new MyDate(initialDate.slice(0,4), initialDate.slice(5, 7) -1, initialDate.slice(8, 10))
+                let start = date.toISOString().slice(0,10)
+                let end = date.addDays(365).toISOString().slice(0,10)
+                axios.get(`https://api.coinpaprika.com/v1/coins/${id}/ohlcv/historical?start=${start}&end=${end}`)
+                .then(resp => {
+                  console.log(resp)
+                    console.log(resp.data.length)
+                    console.log(resp.data[0].time_open, resp.data[0].open)
+                    console.log(resp.data[resp.data.length-1].time_open, resp.data[resp.data.length-1].open)
+                    resp.data.forEach(e => {
+                        if(e.time_open.slice(0,10) === endDate) {
+                            finish = true
+                        } else if (finish === false) {
+                            arrayData.push({date: e.time_open.slice(0,10), close: e.open})
+                        }})
+                    console.log(arrayData, arrayData[0].date, arrayData[arrayData.length -1].date)
+                    if(finish === true) {
+                      changePortfolioFunction(
+                        {type: type, symbol: symbol, name: name, percentage: 0, data: arrayData}
+                      )
+                      return null
+                    }
+                    else api(date.addDays(365).toISOString().slice(0,10), endDate)
+                })
+            }
+            api(initialDate, endDate)
+      }
+    }
+
     const handleOnClick = () => {
       if(inAdvancedModal) {
         /* changePortfolioFunction(
           {type: type, symbol: symbol, name: name, percentage: 0}
         ) */
-        stockDataRequest(symbol)
+        if(cryptoId) {
+          console.log('load data crypto with', cryptoId)
+          cryptoDataRequest(cryptoId)
+        } else {
+          stockDataRequest(symbol)
+        }
       } else if (inSimple) {
         changeInvestmentSimpleFunction({type: type, symbol: symbol, name: name})
       } else if (inAdvancedChart) {
@@ -170,22 +232,22 @@ const PortfolioItem = ({inSimple,
     return (
                       <div onClick={() => handleOnClick()} className='w-full h-14 flex items-center justify-center mb-2'>
                         <StyledHover className='relative w-4/5 h-full rounded-lg bg-gray-200 hover:bg-white mr-2 flex items-center px-2 cursor-pointer hover:shadow-lg transition ease-in-out duration-500'>
-                          <SiApple className='mr-3 text-lg' />
+                          {/* <SiApple className='mr-3 text-lg' /> */}
                           <div className='flex flex-col w-85%'>
                             <span className={`font-inter truncate ${inPortfolio ? 'text-sm' : ''}`}>{name === undefined ? '?' : name} ({symbol === undefined ? '?' : symbol})</span>
                             <span className='font-inter text-gray-500 text-xs'>{type === undefined ? '?' : type}</span>
                           </div>
-                          <HiFlag className='ml-auto text-lg' />
+                          {/* <HiFlag className='ml-auto text-lg' /> */}
                           {inSimple === true || inAdvancedChart === true
                             ? ''
                             : 
                               <div className='absolute top-2 right-2 flex items-center justify-center'>
-                                <span className='styled-son mr-1 bg-gray-500 hover:bg-gray-900 w-20 h-11 flex items-center justify-center rounded-lg transition ease-in-out duration-500'>
+                                {/* <span className='styled-son mr-1 bg-gray-500 hover:bg-gray-900 w-20 h-11 flex items-center justify-center rounded-lg transition ease-in-out duration-500'>
                                   <label class="switch">
                                     <input type="checkbox" defaultChecked={state} onChange={() => handleOnChange()}/>
-                                    <span class="slider round"></span>
+                                    <span className="slider round"></span>
                                   </label>
-                                </span>
+                                </span> */}
                                 <span className='styled-son bg-gray-500 hover:bg-gray-900 w-11 h-11 flex items-center justify-center rounded-lg transition ease-in-out duration-500'>
                                   <FiDelete onClick={() => deleteFromPortfolioFunction(name)} className='text-white text-2xl cursor-pointer'/>
                                 </span>
