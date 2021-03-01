@@ -2,7 +2,16 @@ import React, {useState, useRef, useEffect} from 'react'
 import styled from 'styled-components'
 import axios from 'axios'
 import {connect} from 'react-redux'
-import {showModalStock, changeInvestmentSimple, changeItemData, changePortfolio, deleteFromPortfolio, changeItemFromPortfolio, changeSelectedInAdvancedChart, showModalPortfolio} from './redux/actionCreators'
+import {showModalStock, 
+        changeInvestmentSimple, 
+        changeItemData, 
+        changePortfolio, 
+        deleteFromPortfolio, 
+        changeItemFromPortfolio, 
+        changeSelectedInAdvancedChart, 
+        showModalPortfolio,
+        showModalLoading,
+      } from './redux/actionCreators'
 
 import { FiDelete, FiEdit } from "react-icons/fi";
 import { SiApple } from "react-icons/si";
@@ -112,13 +121,14 @@ const PortfolioItem = ({inSimple,
                         showModalPortfolioFunction,
                         changeItemDataFunction,
                         cryptoId,
+                        showModalLoadingFunction,
                         receivedState}) => {
 
     const stockDataRequest = (symbol) => {
       if(receivedState.initialDatePortfolio === undefined || receivedState.endDatePortfolio === undefined) {
         alert('Please select the dates first')
       } else {
-        axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${symbol}&interval=weekly&start=${receivedState.initialDatePortfolio}&end=${receivedState.endDatePortfolio}`, 
+        axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${symbol}&interval=daily&start=${receivedState.initialDatePortfolio}&end=${receivedState.endDatePortfolio}`, 
         {
             headers: {
               'Accept': 'application/json',
@@ -151,7 +161,9 @@ const PortfolioItem = ({inSimple,
             
             let finish = false
             let initialDate = receivedState.initialDatePortfolio
-            let endDate = receivedState.endDatePortfolio // Construimos todo para traer un día. Ej: pongo 2020-10-15, trae 2020-10-14. Así que habría que hacer algo ahí. 
+            // ESTO ESTÁ MALLLLLLLLL. Esta arreglado para fechas normales, pero ejemplo del 31 de un mes al 1 del otro va a dar error. 
+            let receivedDate = receivedState.endDatePortfolio
+            let endDate = `${receivedDate.slice(0,8)}${(parseInt(receivedDate.slice(8,10)) + 1) < 10 ? '0' + (parseInt(receivedDate.slice(8,10)) + 1) : (parseInt(receivedDate.slice(8,10)) + 1)}`  // Construimos todo para traer un día. Ej: pongo 2020-10-15, trae 2020-10-14. Así que habría que hacer algo ahí. 
             let arrayData = []
 
             // EL PLAN
@@ -162,27 +174,24 @@ const PortfolioItem = ({inSimple,
             //      - Inicio dia 3. Final dia 3. Ver que pasa. 
 
             console.log('disparamos')
+            showModalLoadingFunction(true)
             const api = (initialDate, endDate) => {
                 let date = new MyDate(initialDate.slice(0,4), initialDate.slice(5, 7) -1, initialDate.slice(8, 10))
                 let start = date.toISOString().slice(0,10)
                 let end = date.addDays(365).toISOString().slice(0,10)
                 axios.get(`https://api.coinpaprika.com/v1/coins/${id}/ohlcv/historical?start=${start}&end=${end}`)
                 .then(resp => {
-                  console.log(resp)
-                    console.log(resp.data.length)
-                    console.log(resp.data[0].time_open, resp.data[0].open)
-                    console.log(resp.data[resp.data.length-1].time_open, resp.data[resp.data.length-1].open)
                     resp.data.forEach(e => {
                         if(e.time_open.slice(0,10) === endDate) {
                             finish = true
                         } else if (finish === false) {
                             arrayData.push({date: e.time_open.slice(0,10), close: e.open})
                         }})
-                    console.log(arrayData, arrayData[0].date, arrayData[arrayData.length -1].date)
                     if(finish === true) {
                       changePortfolioFunction(
-                        {type: type, symbol: symbol, name: name, percentage: 0, data: arrayData}
+                        {type: type, symbol: symbol, name: name, percentage: 0, data: arrayData, id: id}
                       )
+                      showModalLoadingFunction(false)
                       return null
                     }
                     else api(date.addDays(365).toISOString().slice(0,10), endDate)
@@ -194,9 +203,6 @@ const PortfolioItem = ({inSimple,
 
     const handleOnClick = () => {
       if(inAdvancedModal) {
-        /* changePortfolioFunction(
-          {type: type, symbol: symbol, name: name, percentage: 0}
-        ) */
         if(cryptoId) {
           console.log('load data crypto with', cryptoId)
           cryptoDataRequest(cryptoId)
@@ -204,7 +210,7 @@ const PortfolioItem = ({inSimple,
           stockDataRequest(symbol)
         }
       } else if (inSimple) {
-        changeInvestmentSimpleFunction({type: type, symbol: symbol, name: name})
+        changeInvestmentSimpleFunction({type: type, symbol: symbol, name: name, id: cryptoId})
       } else if (inAdvancedChart) {
         console.log('1. changeSelectedInAdvancedChart')
         changeSelectedInAdvancedChartFunction({type: type, symbol: symbol, name: name})
@@ -297,7 +303,10 @@ const mapDispatchToProps = dispatch => ({
     },
     changeItemDataFunction(data) {
       dispatch(changeItemData(data))
-    }
+    },
+    showModalLoadingFunction(data) {
+      dispatch(showModalLoading(data))
+    },
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(PortfolioItem)

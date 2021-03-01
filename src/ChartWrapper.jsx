@@ -7,7 +7,7 @@ import { HiChevronDown, HiFlag, HiBriefcase, HiPlus } from "react-icons/hi";
 import PortfolioItem from './PortfolioItem';
 import axios from 'axios';
 import {connect} from 'react-redux'
-import {changePricesSimple} from './redux/actionCreators'
+import {changePricesSimple, showModalLoading} from './redux/actionCreators'
 
 const StyledScrollbarDiv = styled.div`
 &::-webkit-scrollbar-track
@@ -33,7 +33,7 @@ const StyledScrollbarDiv = styled.div`
 }
 `
 
-const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleFunction}) => {
+const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleFunction, showModalLoadingFunction}) => {
 
     const results = useRef(null)
     const button = useRef(null)
@@ -49,41 +49,16 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
         openResults: false,
     })
 
-    const [data, setData] = useState([
-            /* { time: '2019-04-11', value: 80.01 },
-            { time: '2019-04-12', value: 96.63 },
-            { time: '2019-04-13', value: 76.64 },
-            { time: '2019-04-14', value: 8.89 },
-            { time: '2019-04-15', value: 74.43 },
-            { time: '2019-04-16', value: 80.01 },
-            { time: '2019-04-17', value: 96.63 },
-            { time: '2019-04-18', value: 76.64 },
-            { time: '2019-04-19', value: 81.89 },
-            { time: '2019-04-20', value: 74.43 }, */
-    ])
-
-    const open = () => {
-        setState({
-            ...state,
-            openResults: true,
-        })
-    }
-
-    const close = () => {
-        setState({
-            ...state,
-            openResults: false,
-        })
-    }
+    const [data, setData] = useState([])
 
     const handleClickOutside = (event) => {
         if (button.current !== null && !button.current.contains(event.target)) {
-            close()
+            setState({openResults: false})
         }
     }
 
     useEffect(() => {
-        document.addEventListener('mousedown', (e) => handleClickOutside(e));
+        document.addEventListener('click', (e) => handleClickOutside(e));
     },[])
 
     useEffect(() => {
@@ -98,30 +73,22 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
         }
     },[state.openResults])
 
-    /* useEffect(() => {
-        console.log('setStock', inSimple)
-        console.log(receivedState.selectedInAdvancedChart)
-        console.log('2. Listen Stock in ReceivedState')
-        if(inSimple === true) {
-            setStock({
-                name: receivedState.investmentSimple.name,
-                symbol: receivedState.investmentSimple.symbol
-            })
-        } else {
-            setStock({
-                name: receivedState.selectedInAdvancedChart.name,
-                symbol: receivedState.selectedInAdvancedChart.symbol
-            })
-        }
-    }, [receivedState.investmentSimple, inSimple, receivedState.selectedInAdvancedChart]) */
-
     useEffect(() => {
         console.log('2. Listen Stock in ReceivedState (setStock)', receivedState.selectedInAdvancedChart)
-        if(inSimple === true) {
-            setStock({
-                name: receivedState.investmentSimple.name,
-                symbol: receivedState.investmentSimple.symbol
-            })
+        if (inSimple === true) {
+            if (receivedState.investmentSimple.type === 'coin' || receivedState.investmentSimple.type === 'token') { 
+                setStock({
+                    type: receivedState.investmentSimple.type,
+                    name: receivedState.investmentSimple.name,
+                    symbol: receivedState.investmentSimple.symbol,
+                    id: receivedState.investmentSimple.id
+                })
+            } else {
+                setStock({
+                    name: receivedState.investmentSimple.name,
+                    symbol: receivedState.investmentSimple.symbol
+                })
+            }
         } else if (receivedState.selectedInAdvancedChart.type === 'coin' || receivedState.selectedInAdvancedChart.type === 'token') { 
             setStock({
                 type: receivedState.selectedInAdvancedChart.type,
@@ -143,14 +110,14 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
             let interval // daily, weekly, monthly
             if(receivedState.dateSimple.includes('year')) {
                 initialDate = `${currentDate.getFullYear() - receivedState.dateSimple.slice(0,2)}-${todayMonth < 10 ? '0'+todayMonth : todayMonth}-${currentDate.getDate() < 10 ? '0'+currentDate.getDate() : currentDate.getDate()}`
-                interval = 'monthly'
+                interval = 'daily'
             }
             if(receivedState.dateSimple.includes('month')){
                 let now = new Date()
                 now.setMonth(now.getMonth() - receivedState.dateSimple.slice(0,2))
                 let nowMonth = now.getMonth() + 1
                 initialDate = `${now.getFullYear()}-${nowMonth < 10 ? '0'+nowMonth : nowMonth}-${now.getDate() < 10 ? '0'+now.getDate() : now.getDate()}`
-                interval = 'weekly'
+                interval = 'daily'
             }
             if(receivedState.dateSimple.includes('day')) {
                let now = new Date()
@@ -159,6 +126,46 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
                initialDate = `${now.getFullYear()}-${nowMonth < 10 ? '0'+nowMonth : nowMonth}-${now.getDate() < 10 ? '0'+now.getDate() : now.getDate()}`
                interval = 'daily'
             }
+            if(receivedState.investmentSimple.type === 'coin' || receivedState.investmentSimple.type === 'token') {
+                class MyDate extends Date {                
+                    addDays(days) {
+                        var date = new Date(this.valueOf());
+                        date.setDate(date.getDate() + days);
+                        return date;
+                    }
+                  }
+                
+                let finish = false
+                //let initialDate = receivedState.initialDatePortfolio
+                // ESTO ESTÁ MALLLLLLLLL. Esta arreglado para fechas normales, pero ejemplo del 31 de un mes al 1 del otro va a dar error. 
+                //let receivedDate = receivedState.endDatePortfolio
+                //let endDate = `${receivedDate.slice(0,8)}${(parseInt(receivedDate.slice(8,10)) + 1) < 10 ? '0' + (parseInt(receivedDate.slice(8,10)) + 1) : (parseInt(receivedDate.slice(8,10)) + 1)}`  // Construimos todo para traer un día. Ej: pongo 2020-10-15, trae 2020-10-14. Así que habría que hacer algo ahí. 
+                let arrayData = []
+              
+                console.log('disparamos')
+                showModalLoadingFunction(true)
+                const api = (initialDate, endDate) => {
+                    let date = new MyDate(initialDate.slice(0,4), initialDate.slice(5, 7) -1, initialDate.slice(8, 10))
+                    let start = initialDate
+                    let end = today
+                    axios.get(`https://api.coinpaprika.com/v1/coins/${receivedState.investmentSimple.id}/ohlcv/historical?start=${start}&end=${end}`)
+                    .then(resp => {
+                        resp.data.forEach(e => {
+                            if(e.time_open.slice(0,10) === endDate) {
+                                finish = true
+                            } else if (finish === false) {
+                                arrayData.push({date: e.time_open.slice(0,10), close: e.open})
+                            }})
+                        if(finish === true) {
+                          setData(arrayData)
+                          showModalLoadingFunction(false)
+                          return null
+                        }
+                        else api(date.addDays(365).toISOString().slice(0,10), endDate)
+                    })
+                }
+                api(initialDate, today)
+            } else {
             axios.get(`https://sandbox.tradier.com/v1/markets/history?symbol=${receivedState.investmentSimple.symbol}&interval=${interval}&start=${initialDate}&end=${today}`, 
             {
                 headers: {
@@ -171,7 +178,7 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
                 let dataArray = []
                 resp.data.history.day.forEach(e => dataArray.push({time: e.date, value: e.close}))
                 setData(dataArray)
-            })
+            })}
         } else {
             /* console.log('PETICIÓN EN ADVANCED')
             console.log('3. Load Stock Data (read stock)', stock)
@@ -269,7 +276,7 @@ const ChartWrapper = ({propsStyles, inSimple, receivedState, changePricesSimpleF
                     ?
                     ''
                     :
-                    <button ref={button} onClick={() => open()} className='bg-white rounded-lg ml-auto h-full w-14 mb-3 flex items-center justify-center text-3xl'>
+                    <button ref={button} onClick={() => setState({openResults: true})} className='bg-white rounded-lg ml-auto h-full w-14 mb-3 flex items-center justify-center text-3xl'>
                         <HiChevronDown/>
                     </button>
                 }
@@ -296,6 +303,9 @@ const mapStateToProps = state => (
 const mapDispatchToProps = dispatch => ({
     changePricesSimpleFunction(data) {
         dispatch(changePricesSimple(data))
+    },
+    showModalLoadingFunction(data){
+        dispatch(showModalLoading(data))
     }
 })
 

@@ -3,8 +3,9 @@ import React, {useEffect, useState, useRef} from 'react'
 import {Link} from 'react-router-dom';
 import Cleave from 'cleave.js/react';
 import styled from 'styled-components'
+import moment from 'moment'
 
-import {showModalStock, changeInitialDatePortfolio, changeEndDatePortfolio, changeAmountAdvanced, changeItemData} from './redux/actionCreators'
+import {showModalStock, changeInitialDatePortfolio, changeEndDatePortfolio, changeAmountAdvanced, changeItemData, showModalLoading} from './redux/actionCreators'
 import {connect} from 'react-redux'
 
 import Info from './Info';
@@ -17,6 +18,7 @@ import { SiApple } from "react-icons/si";
 import { HiFlag, HiBriefcase, HiPlus } from "react-icons/hi";
 import ModalPortfolio from './ModalPortfolio';
 import axios from 'axios';
+import ModalLoading from './ModalLoading';
 
 const StyledDiv = styled.div`
 & {
@@ -97,7 +99,7 @@ const StyledScrollbarDiv = styled.div`
 }
 `
 
-const AdvancedPage = ({changeItemDataFunction, showModalStockFunction, receivedState, changeInitialDatePortfolioFunction, changeEndDatePortfolioFunction, changeAmountAdvancedFunction}) => {
+const AdvancedPage = ({changeItemDataFunction, showModalStockFunction, receivedState, changeInitialDatePortfolioFunction, changeEndDatePortfolioFunction, changeAmountAdvancedFunction, showModalLoadingFunction}) => {
 
   const amount = useRef(null)
 
@@ -112,6 +114,7 @@ const AdvancedPage = ({changeItemDataFunction, showModalStockFunction, receivedS
 
   // Calculando precio inicial y final de cada acción. 
   useEffect(() => {
+    console.log(receivedState)
     let totalAmount = receivedState.amountAdvanced
     let arrayEarned = []
     let arrayGrowth = []
@@ -137,34 +140,52 @@ const AdvancedPage = ({changeItemDataFunction, showModalStockFunction, receivedS
     receivedState.portfolio.forEach(e => {
       let initialPrice = e.data[0].close
       let initialAmountInStock = e.percentage * totalAmount / 100
-      let array = {
+      let object = {
         symbol: e.symbol,
-        growth: [],
+        growth: {}
       }
       e.data.forEach(x => {
-        array.growth.push({time: x.date, value: initialAmountInStock * x.close / initialPrice})
+        object.growth[x.date] = initialAmountInStock * x.close / initialPrice
       })
-      sumArrays.push(array)
+      sumArrays.push(object)
     })
     // En Sumarrays tenes la ganancia o growth por cada accion y por cada dia. Tenes que sumar cada key entre ellas pero guardando la date de la key. 
     let finalArrayToData = []
-    console.log(sumArrays)
     if(sumArrays.length > 0) {
-      for (let i = 0; i < sumArrays[0].growth.length; i++) {
-        //console.log('SUMA', sumArrays[0].growth[i], sumArrays[1].growth[i])
-        //console.log('EACH', sumArrays[0].growth[i].time, sumArrays[0].growth[i].value + sumArrays[1].growth[i].value)
-        //finalArrayToData.push({time: sumArrays[0].growth[i].time, value: sumArrays[0].growth[i].value + sumArrays[1].growth[i].value})
-        
-        let arrayWithValues = []
-        // No encuentra value a la hora de Update dates. 
-        console.log('sumArray, no encuentra .value', sumArrays)
-        for (let x = 0; x < sumArrays.length; x++) {
-          arrayWithValues.push(sumArrays[x].growth[i].value)
+
+      
+      for (let i = 0; i < sumArrays.length; i++) {
+        if(Object.keys(sumArrays[i].growth).length !== Object.keys(sumArrays[0].growth).length) {
+          console.log('Hay menos fechas')
+          for (let x = 0; x < Object.keys(sumArrays[0].growth).length; x++) {
+            //console.log(sumArrays[i].growth[Object.keys(sumArrays[0].growth)[x]])
+            if(sumArrays[i].growth[Object.keys(sumArrays[0].growth)[x]] === undefined){
+              sumArrays[i].growth[Object.keys(sumArrays[0].growth)[x]] = sumArrays[i].growth[Object.keys(sumArrays[0].growth)[x-1]]
+            }
+          }
         }
-        const reducer = (accumulator, currentValue) => accumulator + currentValue;
-        //console.log({time: sumArrays[0].growth[i].time, value: arrayWithValues})
-        finalArrayToData.push({time: sumArrays[0].growth[i].time, value: arrayWithValues.reduce(reducer)})
-    }
+      }
+      
+      // Solucionado: Ya entrega todos los días en stocks. Los fines de semana toma el valor anterior. 
+      
+      let resultObject = {}
+      for (let i = 0; i < sumArrays.length; i++) {
+        for (let x = 0; x < Object.keys(sumArrays[i].growth).length; x++) {
+          //console.log(Object.keys(sumArrays[i].growth)[x], sumArrays[i].growth[Object.keys(sumArrays[i].growth)[x]])
+          if(resultObject[Object.keys(sumArrays[i].growth)[x]]) {
+            resultObject[Object.keys(sumArrays[i].growth)[x]] += sumArrays[i].growth[Object.keys(sumArrays[i].growth)[x]]
+          } else {
+            resultObject[Object.keys(sumArrays[i].growth)[x]] = sumArrays[i].growth[Object.keys(sumArrays[i].growth)[x]]
+          }
+        }
+      }
+      // Esto transforma los precios de cada elemento a 1 sola fecha y 1 solo precio. 
+
+      for (let x = 0; x < Object.keys(resultObject).length; x++) {
+        finalArrayToData.push({time: Object.keys(resultObject)[x], value: resultObject[Object.keys(resultObject)[x]]})
+      }
+      // Esto agrega resultObject a finalArrayToData
+
     console.log('FINAL ARRAY', finalArrayToData)
     setGrowth(finalArrayToData)
     // CREO QUE DEJE TODO ANDANDO. PERO HAY QUE REVISAR. EJEMPLO SI ELIMINO O AGREGO STOCKS, CAMBIO %, CAMBIO FECHAS. ETC. CAMBIO AMOUNT. 
@@ -192,11 +213,71 @@ const AdvancedPage = ({changeItemDataFunction, showModalStockFunction, receivedS
       })
   }
 
+  const updateDataCrypto = (id, symbol) => {
+    class MyDate extends Date {                
+      addDays(days) {
+          var date = new Date(this.valueOf());
+          date.setDate(date.getDate() + days);
+          return date;
+      }
+    }
+  
+  let finish = false
+  let initialDate = receivedState.initialDatePortfolio
+  // ESTO ESTÁ MALLLLLLLLL. Esta arreglado para fechas normales, pero ejemplo del 31 de un mes al 1 del otro va a dar error. 
+  let receivedDate = receivedState.endDatePortfolio
+  let endDate = `${receivedDate.slice(0,8)}${(parseInt(receivedDate.slice(8,10)) + 1) < 10 ? '0' + (parseInt(receivedDate.slice(8,10)) + 1) : (parseInt(receivedDate.slice(8,10)) + 1)}`  // Construimos todo para traer un día. Ej: pongo 2020-10-15, trae 2020-10-14. Así que habría que hacer algo ahí. 
+  let arrayData = []
+
+  // EL PLAN
+  // El plan es que itere cada dia entregado y si uno de esos días es === a endDate se ejecuta finish = true
+
+  // Debería arreglar errores:
+  //      - Inicio dia 3. Final dia 2. Error. 
+  //      - Inicio dia 3. Final dia 3. Ver que pasa. 
+
+  console.log('disparamos')
+  showModalLoadingFunction(true)
+  const api = (initialDate, endDate) => {
+      let date = new MyDate(initialDate.slice(0,4), initialDate.slice(5, 7) -1, initialDate.slice(8, 10))
+      let start = date.toISOString().slice(0,10)
+      let end = date.addDays(365).toISOString().slice(0,10)
+      axios.get(`https://api.coinpaprika.com/v1/coins/${id}/ohlcv/historical?start=${start}&end=${end}`)
+      .then(resp => {
+          resp.data.forEach(e => {
+              if(e.time_open.slice(0,10) === endDate) {
+                  finish = true
+              } else if (finish === false) {
+                  arrayData.push({date: e.time_open.slice(0,10), close: e.open})
+              }})
+          if(finish === true) {
+            changeItemDataFunction(
+              {symbol: symbol, data: arrayData}
+            )
+            showModalLoadingFunction(false)
+            return null
+          }
+          else api(date.addDays(365).toISOString().slice(0,10), endDate)
+      })
+  }
+  api(initialDate, endDate)
+  }
+
   const handleOnClickUpdateDates = () => {
+    console.log(receivedState.portfolio)
     receivedState.portfolio.forEach(e => {
-      updateDataStock(e.symbol)
+      if(e.type === 'coin' || e.type === 'token') {
+        updateDataCrypto(e.id, e.symbol)
+      } else updateDataStock(e.symbol)
     })
   }
+
+  const [loadingVisibility, setLoadingVisibility] = useState(false)
+
+  useEffect(() => {
+    console.log('useEffect está leyendo que cambio el receivedState.showModalLoading')
+    setLoadingVisibility(receivedState.showModalLoading)
+  }, [receivedState.showModalLoading])
 
     return (
         <>
@@ -272,7 +353,8 @@ const AdvancedPage = ({changeItemDataFunction, showModalStockFunction, receivedS
               </StyledDiv>
             </div>
             <ModalStock where={'inAdvanced'}/>
-            <ModalPortfolio/>''
+            <ModalPortfolio/>
+            <ModalLoading visibility={loadingVisibility} />
         </>
     )
 }
@@ -298,6 +380,9 @@ const mapDispatchToProps = dispatch => ({
     },
     changeItemDataFunction(data) {
       dispatch(changeItemData(data))
+    },
+    showModalLoadingFunction(data) {
+      dispatch(showModalLoading(data))
     }
 })
 

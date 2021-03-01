@@ -15,6 +15,7 @@ import {
   SHOW_MODAL_PORTFOLIO,
   CHANGE_ITEM_PERCENTAGE,
   CHANGE_ITEM_DATA,
+  SHOW_MODAL_LOADING,
 } from './actions';
 
 const showModalStock = (data) => ({
@@ -97,6 +98,11 @@ const changeItemData = (data) => ({
   data,
 });
 
+const showModalLoading = (data) => ({
+  type: SHOW_MODAL_LOADING,
+  data,
+});
+
 export {
   showModalStock,
   changeAmountSimple,
@@ -114,4 +120,5 @@ export {
   showModalPortfolio,
   changeItemPercentage,
   changeItemData,
+  showModalLoading,
 };

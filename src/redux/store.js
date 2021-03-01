@@ -16,11 +16,13 @@ import {
   CHANGE_AMOUNT_ADVANCED,
   CHANGE_ITEM_PERCENTAGE,
   CHANGE_ITEM_DATA,
+  SHOW_MODAL_LOADING,
 } from './actions';
 
 const initialStore = {
   showModalStock: false,
   showModalPortfolio: false,
+  showModalLoading: false,
   amountSimple: undefined,
   amountAdvanced: undefined,
   dateSimple: '10 years ago',
@@ -136,6 +138,8 @@ const rootReducer = (state = initialStore, action) => {
   if (action.type === CHANGE_ITEM_PERCENTAGE) {
     let array = state.portfolio;
     array.filter((e) => e.symbol === action.data.symbol)[0].percentage = action.data.percentage;
+    // useEffect no detecta cambio en receivedState.portfolio. Pero si pongo receivedState si lo detecta.
+    // Quizas que haga la petición cuando tocó el boton Save de ModalPortfolio.
     return {
       ...state,
       portfolio: array,
@@ -144,11 +148,19 @@ const rootReducer = (state = initialStore, action) => {
   if (action.type === CHANGE_ITEM_DATA) {
     let array = state.portfolio;
     array.filter((e) => e.symbol === action.data.symbol)[0].data = action.data.data;
+    // Este lo mismo que CHANGE_ITEM_PERCENTAGE.
     return {
       ...state,
       portfolio: array,
     };
   }
+  if (action.type === SHOW_MODAL_LOADING) {
+    return {
+      ...state,
+      showModalLoading: action.data,
+    };
+  }
+  console.log(state);
   return state;
 };
 
