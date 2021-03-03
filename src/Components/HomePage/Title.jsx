@@ -1,0 +1,83 @@
+import React, {useRef, useEffect} from 'react'
+import Cleave from 'cleave.js/react'
+import {showModalStock, changeAmountHome} from '../../redux/actionCreators'
+import {connect} from 'react-redux'
+import List from './Childs/List'
+
+// Recibe StockSelected & TimeSelected
+// Envía Amount, FunciónParaAbrirStockModal y FunciónParaAbrirTimeList
+
+const Title = ({changeAmountHomeFunction, showModalStockFunction, stockSelectedInGlobalState}) => {
+
+    const span = useRef(null)
+    const amount = useRef(null)
+
+    const lengthListener = (e) => {
+        if(window.innerWidth > 640) {
+            span.current.style.width = `${e.target.value.length * 15}px`
+        }   
+    }
+
+    useEffect(() => {
+        // El componente se renderiza con 10,000 como value y se lo manda al GlobalState mediante este useEffect. 
+        // Este useEffect funciona como un componentDidMount
+        changeAmountHomeFunction(amount.current.getRawValue().slice(1))
+    },[])
+
+    return (
+        <div className='flex flex-col sm:flex-row items-center justify-center w-95% sm:items-start sm:justify-start sm:w-auto'>
+            <div className='font-inter text-gray-100 text-center flex items-center justify-center pb-2 sm:pb-7 lg:text-xl'>
+                What if you bought
+            </div>
+            <div ref={span} className='mb-2 sm:mb-0 flex items-center justify-center pb-7 relative mx-4 w-90% sm:w-24 lg:w-28 min-w-20 max-w-none sm:max-w-11rem lg:max-w-56'>
+                <Cleave 
+                    className='text-2xl sm:text-base lg:text-xl w-full px-2 bg-transparent rounded-md font-inter text-white text-center font-bold focus:text-black focus:bg-white focus:shadow-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500'
+                    placeholder="Enter a number" 
+                    options={{numeral: true, numeralThousandsGroupStyle: 'thousand', prefix: '$'}}
+                    value="10000"
+                    onChange={(e) => { lengthListener(e); changeAmountHomeFunction(e.target.rawValue.slice(1));}}
+                    maxLength='16'
+                    ref={amount}
+                />
+                <div className='absolute text-gray-300 bottom-0 left-1/2 transform -translate-x-1/2'>Edit</div>
+            </div>
+            <div className='flex mb-2 sm:mb-0'>
+                <div className='lg:text-xl font-inter text-gray-100 text-center flex items-center justify-center pb-7'>
+                    of
+                </div>
+                <div className='ml-4 flex items-center justify-center pb-7 relative'>
+                    <button onClick={() => showModalStockFunction(true)} className="text-2xl sm:text-base lg:text-xl truncate max-w-56 px-4 bg-transparent rounded-md font-inter text-white text-center font-bold focus:text-black focus:bg-white focus:shadow-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+                        {stockSelectedInGlobalState}
+                    </button>
+                    <div className='absolute text-gray-300 bottom-0 left-1/2 transform -translate-x-1/2'>Edit</div>            
+                </div>
+            </div>
+            <div className='flex'>
+                <div className='flex items-center justify-center pb-7 relative'>
+                    <List/>
+                    <div className='absolute text-gray-300 bottom-0 left-1/2 transform -translate-x-1/2'>Edit</div>   
+                </div>    
+                <div className='lg:text-xl ml-4 font-inter text-gray-100 text-center flex items-center justify-center pb-7'>
+                    ?
+                </div>
+            </div>
+        </div>
+    )
+}
+
+const mapStateToProps = state => (
+    {
+        stockSelectedInGlobalState: state.investmentHome.name
+    }
+)
+
+const mapDispatchToProps = dispatch => ({
+    showModalStockFunction(data) {
+        dispatch(showModalStock(data))
+    },
+    changeAmountHomeFunction(data) {
+        dispatch(changeAmountHome(data))
+    }
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(Title)

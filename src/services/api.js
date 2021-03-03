@@ -1,26 +1,48 @@
 import axios from 'axios';
+import moment from 'moment';
 const baseUrl = 'http://localhost:3001/notes';
+const stockRequestHeaders = {
+  headers: {
+    Accept: 'application/json',
+    Authorization: 'Bearer ogG8k3GwGImUQXmAjvzxl5tIWapI',
+  },
+};
 
-const getAll = () => {
-  const request = axios.get(baseUrl);
-  const nonExisting = {
-    id: 10000,
-    content: 'This note is not saved to server',
-    date: '2019-05-30T17:30:31.098Z',
-    important: true,
+const getStockData = (symbol, interval, initialDate, endDate) => {
+  const request = axios.get(
+    `https://sandbox.tradier.com/v1/markets/history?symbol=${symbol}&interval=${interval}&start=${initialDate}&end=${endDate}`,
+    stockRequestHeaders
+  );
+  return request.then((resp) => {
+    let dataArray = [];
+    resp.data.history.day.forEach((e) => dataArray.push({ time: e.date, value: e.close }));
+    return dataArray;
+  });
+};
+
+const getCryptoData = (id, initialDate, endDate) => {
+  let finish = false;
+  let arrayData = [];
+
+  const apiCall = (initialDate, endDate) => {
+    let start = initialDate;
+    let end = moment(initialDate).add(365, 'days').toISOString().slice(0, 10);
+    const request = axios.get(`https://api.coinpaprika.com/v1/coins/${id}/ohlcv/historical?start=${start}&end=${end}`);
+    return request.then((resp) => {
+      resp.data.forEach((e) => {
+        if (e.time_open.slice(0, 10) === endDate) {
+          arrayData.push({ time: e.time_open.slice(0, 10), value: e.open });
+          finish = true;
+        } else if (finish === false) {
+          arrayData.push({ time: e.time_open.slice(0, 10), value: e.open });
+        }
+      });
+      if (finish === true) {
+        return arrayData;
+      } else return apiCall(end, endDate);
+    });
   };
-  return request.then((response) => response.data.concat(nonExisting));
-  //return request.then(response => response.data)
+  return apiCall(initialDate, endDate);
 };
 
-const create = (newObject) => {
-  const request = axios.post(baseUrl, newObject);
-  return request.then((response) => response.data);
-};
-
-const update = (id, newObject) => {
-  const request = axios.put(`${baseUrl}/${id}`, newObject);
-  return request.then((response) => response.data);
-};
-
-export default { getAll, create, update };
+export { getStockData, getCryptoData };
