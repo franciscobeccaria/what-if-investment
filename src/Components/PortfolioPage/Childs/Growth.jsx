@@ -66,7 +66,7 @@ const Growth = ({where, growthInPercentage, data}) => {
     }, [data])
 
     return (
-        <div className='flex w-170 max-w-90vw sm:h-44 flex-col-reverse sm:flex-row' style={where === 'Portfolio' ? {width: '100%', flexDirection: 'column-reverse', height: 'fit-content'} : {}}>
+        <div className='flex w-170 max-w-90vw flex-col-reverse sm:flex-row' style={where === 'Portfolio' ? {width: '100%', flexDirection: 'column-reverse', height: 'fit-content'} : {}}>
             <div ref={chartContainer} className='bg-white w-full sm:w-55% rounded-lg h-52 sm:h-44 sm:h-full flex items-center justify-center' style={where === 'Portfolio' ? {width: '100%', marginTop: '8px', height: '18rem'} : {}}>
                 <div ref={chartDiv}></div>
             </div>
