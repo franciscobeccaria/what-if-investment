@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import store from './redux/store';
 import { HiBriefcase, HiHome } from 'react-icons/hi';
+import { Toaster } from 'react-hot-toast';
 
 import HomePage from './Components/HomePage';
 import PortfolioPage from './Components/PortfolioPage';
@@ -16,6 +17,9 @@ function App() {
     //    AdvancedPage
     // Footer
     <Provider store={store}>
+      <Toaster
+        position="bottom-right"
+      />
       <Router>
         <div className="absolute sm:fixed top-0 left-1/2 sm:left-0 w-32 h-12 flex items-center justify-around sm:pl-4 pt-3 transform -translate-x-1/2 sm:translate-x-0">
           <Link to={'/'}>

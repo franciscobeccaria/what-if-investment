@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react'
+import toast from 'react-hot-toast';
 import ModalStock from './PortfolioPage/ModalStock'
 import ModalPortfolio from './PortfolioPage/ModalPortfolio'
 import Controls from './PortfolioPage/Controls'
@@ -82,15 +83,21 @@ const PortfolioPage = ({portfolioInGlobalState, dateInGlobalState, portfolioData
                 portfolioDataInGlobalState[e].endDate !== dateInGlobalState.end) {
                   if(portfolioInGlobalState[e].id) {
                     setStocksLoading(oldState => oldState + 1);
-                    getCryptoData(portfolioInGlobalState[e].id, dateInGlobalState.initial, dateInGlobalState.end).then(resp => {
+                    getCryptoData(portfolioInGlobalState[e].id, dateInGlobalState.initial, dateInGlobalState.end)
+                      .then(resp => {
                         updateDataPortfolioFunction({
                           symbol: portfolioInGlobalState[e].id, 
                           data: resp, 
                           initialDate: dateInGlobalState.initial, 
                           endDate: dateInGlobalState.end
-                        })
+                        });
                         setStocksLoading(oldState => oldState - 1);
-                    })
+                      })
+                      .catch(error => {
+                        const errorMessage = 'Error fetching crypto data. '
+                        console.error(errorMessage, error);
+                        toast.error(errorMessage, {duration: 10000})
+                      });
                   } else {
                     setStocksLoading(oldState => oldState + 1);
                     getStockData(portfolioInGlobalState[e].symbol, 'daily', dateInGlobalState.initial, dateInGlobalState.end).then(resp => {

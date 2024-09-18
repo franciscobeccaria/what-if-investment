@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react'
+import toast from 'react-hot-toast';
 import Title from './HomePage/Title'
 import Info from './HomePage/Info'
 import Growth from './HomePage/Growth'
@@ -51,10 +52,16 @@ const HomePage = ({updateDataInvestmentHomeFunction, showModalLoadingFunction, s
         }
         if(selectedInvestmentInGlobalState.id) {
             showModalLoadingFunction(true)
-            getCryptoData(selectedInvestmentInGlobalState.id, initialDate, today).then(resp => {
-                updateDataInvestmentHomeFunction(resp)
-                showModalLoadingFunction(false)
-            })
+            getCryptoData(selectedInvestmentInGlobalState.id, initialDate, today)
+                .then(resp => {
+                    updateDataInvestmentHomeFunction(resp);
+                    showModalLoadingFunction(false);
+                })
+                .catch(error => {
+                    const errorMessage = 'Error fetching crypto data. '
+                    console.error(errorMessage, error);
+                    toast.error(errorMessage, {duration: 10000})
+                });
         } else {
             showModalLoadingFunction(true)
             getStockData(selectedInvestmentInGlobalState.symbol, 'daily', initialDate, today).then(resp => {
